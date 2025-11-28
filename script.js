@@ -153,7 +153,8 @@ const questions = [
 
 let currentQuestionIndex = 0;
 let draggedElement = null;
-let dragItemsContainerRef = null; 
+let dragItemsContainerRef = null;
+let selectedItem = null; // For tap-based drag-and-drop on mobile
 
 // --- دوال اللغة والقراءة ---
 // دالة للكشف عن الأجهزة المحمولة
@@ -362,28 +363,30 @@ function checkMultipleChoice(selectedOption, correctAnswer, button) {
 function renderDragAndDrop(data) {
     const ddContainer = document.createElement('div');
     ddContainer.classList.add('drag-drop-container');
-    
+
     // 1. العناصر القابلة للسحب
     const dragItemsContainer = document.createElement('div');
     dragItemsContainer.classList.add('drag-items');
     dragItemsContainerRef = dragItemsContainer; // حفظ المرجع
-    
+
+    const isMobile = isMobileDevice();
+
     data.items.forEach(itemText => {
         const item = document.createElement('div');
         item.textContent = itemText;
         item.classList.add('drag-item');
-        item.setAttribute('draggable', true);
-        // Make the item more touch-friendly
-        item.style.touchAction = 'none';
-        item.style.userSelect = 'none';
-        item.style.webkitTouchCallout = 'none';
-        item.style.webkitUserSelect = 'none';
-        item.style.webkitTapHighlightColor = 'transparent';
-        item.addEventListener('dragstart', handleDragStart);
-        // Add touch event listeners for mobile support with more aggressive prevention
-        item.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
-        item.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
-        item.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+
+        if (isMobile) {
+            // For mobile: touch drag
+            item.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
+            item.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+            item.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+        } else {
+            // For desktop: drag
+            item.setAttribute('draggable', true);
+            item.addEventListener('dragstart', handleDragStart);
+        }
+
         dragItemsContainer.appendChild(item);
     });
     ddContainer.appendChild(dragItemsContainer);
@@ -394,26 +397,34 @@ function renderDragAndDrop(data) {
     data.targets.forEach((target, index) => {
         const zoneItem = document.createElement('div');
         zoneItem.classList.add('drop-zone-item');
-        
+
         const textSpan = document.createElement('span');
         textSpan.textContent = target.text;
         zoneItem.appendChild(textSpan);
-        
+
         const dropTarget = document.createElement('div');
         dropTarget.classList.add('drop-target');
         dropTarget.textContent = translations[currentLang].drag_prompt;
         dropTarget.setAttribute('data-answer', target.answer);
         dropTarget.setAttribute('id', `drop-target-${index}`); // إضافة ID لسهولة الإرجاع
-        dropTarget.addEventListener('dragover', handleDragOver);
-        dropTarget.addEventListener('dragleave', handleDragLeave);
-        dropTarget.addEventListener('drop', handleDrop);
-        dropTarget.addEventListener('click', handleDropZoneClick); // إضافة مستمع النقر
+
+        if (isMobile) {
+            // For mobile: tap to drop
+            dropTarget.addEventListener('click', handleDropZoneTap);
+        } else {
+            // For desktop: drag and drop
+            dropTarget.addEventListener('dragover', handleDragOver);
+            dropTarget.addEventListener('dragleave', handleDragLeave);
+            dropTarget.addEventListener('drop', handleDrop);
+        }
+
+        dropTarget.addEventListener('click', handleDropZoneClick); // إضافة مستمع النقر لإعادة الكلمة
         zoneItem.appendChild(dropTarget);
-        
+
         dropZonesContainer.appendChild(zoneItem);
     });
     ddContainer.appendChild(dropZonesContainer);
-    
+
     questionContainer.appendChild(ddContainer);
     nextButton.style.display = 'block';
     nextButton.removeEventListener('click', checkImageMatch);
@@ -594,12 +605,36 @@ function handleTouchEnd(e) {
 }
 
 // الدالة الجديدة لإعادة الكلمة المسحوبة
+function handleItemSelect(e) {
+    // Deselect previous item
+    if (selectedItem) {
+        selectedItem.classList.remove('selected');
+    }
+
+    // Select new item
+    selectedItem = e.target;
+    selectedItem.classList.add('selected');
+}
+
+function handleDropZoneTap(e) {
+    if (!selectedItem || e.target.classList.contains('filled')) return;
+
+    const dropTarget = e.target;
+    dropTarget.textContent = selectedItem.textContent;
+    dropTarget.classList.add('filled');
+    selectedItem.style.display = 'none';
+    selectedItem.setAttribute('data-dropped', 'true');
+    selectedItem.setAttribute('data-target-id', dropTarget.id);
+    selectedItem.classList.remove('selected');
+    selectedItem = null;
+}
+
 function handleDropZoneClick(e) {
     const dropTarget = e.currentTarget;
     if (dropTarget.classList.contains('filled')) {
         const droppedText = dropTarget.textContent;
         const targetId = dropTarget.id;
-        
+
         // البحث عن العنصر المسحوب بناءً على النص و ID منطقة الإفلات
         const allDragItems = dragItemsContainerRef.querySelectorAll('.drag-item');
         allDragItems.forEach(item => {
@@ -609,7 +644,7 @@ function handleDropZoneClick(e) {
                 item.removeAttribute('data-target-id');
             }
         });
-        
+
         // تفريغ منطقة الإفلات
         dropTarget.textContent = translations[currentLang].drag_prompt;
         dropTarget.classList.remove('filled', 'correct', 'wrong');
