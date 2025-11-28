@@ -371,11 +371,17 @@ function renderDragAndDrop(data) {
         item.textContent = itemText;
         item.classList.add('drag-item');
         item.setAttribute('draggable', true);
+        // Make the item more touch-friendly
+        item.style.touchAction = 'none';
+        item.style.userSelect = 'none';
+        item.style.webkitTouchCallout = 'none';
+        item.style.webkitUserSelect = 'none';
+        item.style.webkitTapHighlightColor = 'transparent';
         item.addEventListener('dragstart', handleDragStart);
-        // Add touch event listeners for mobile support
-        item.addEventListener('touchstart', handleTouchStart, { passive: false });
-        item.addEventListener('touchmove', handleTouchMove, { passive: false });
-        item.addEventListener('touchend', handleTouchEnd, { passive: false });
+        // Add touch event listeners for mobile support with more aggressive prevention
+        item.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
+        item.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+        item.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
         dragItemsContainer.appendChild(item);
     });
     ddContainer.appendChild(dragItemsContainer);
@@ -448,72 +454,141 @@ function handleDrop(e) {
 // Touch event handlers for mobile drag-and-drop support
 let touchDraggedElement = null;
 let touchClone = null;
+let initialTouchX = 0;
+let initialTouchY = 0;
+let isDragging = false;
 
 function handleTouchStart(e) {
     e.preventDefault();
-    touchDraggedElement = e.target;
+    e.stopPropagation();
+    const touch = e.touches[0];
+
+    // Find the drag item by checking if the touch target or its parents is a drag item
+    let target = e.target;
+    while (target && target !== e.currentTarget) {
+        if (target.classList.contains('drag-item')) {
+            touchDraggedElement = target;
+            break;
+        }
+        target = target.parentElement;
+    }
+
+    if (!touchDraggedElement) return;
+
     touchDraggedElement.classList.add('dragging');
+
+    // Store initial touch position
+    initialTouchX = touch.clientX;
+    initialTouchY = touch.clientY;
+    isDragging = false;
 
     // Create a visual clone for dragging
     touchClone = touchDraggedElement.cloneNode(true);
     touchClone.classList.add('touch-clone');
-    touchClone.style.position = 'absolute';
+    touchClone.style.position = 'fixed';
     touchClone.style.pointerEvents = 'none';
     touchClone.style.zIndex = '1000';
+    touchClone.style.transform = 'scale(1.05)';
+    touchClone.style.opacity = '0.95';
+    touchClone.style.transition = 'none'; // Disable transitions for smooth following
+
     document.body.appendChild(touchClone);
 
-    // Position the clone at the touch point
-    const touch = e.touches[0];
-    touchClone.style.left = (touch.clientX - touchClone.offsetWidth / 2) + 'px';
-    touchClone.style.top = (touch.clientY - touchClone.offsetHeight / 2) + 'px';
+    // Position the clone initially at the touch point
+    updateClonePosition(touch.clientX, touch.clientY);
+}
+
+function updateClonePosition(clientX, clientY) {
+    if (!touchClone) return;
+
+    // Position the clone centered on the touch point
+    const cloneRect = touchClone.getBoundingClientRect();
+    const cloneWidth = cloneRect.width;
+    const cloneHeight = cloneRect.height;
+
+    touchClone.style.left = (clientX - cloneWidth / 2) + 'px';
+    touchClone.style.top = (clientY - cloneHeight / 2) + 'px';
 }
 
 function handleTouchMove(e) {
     e.preventDefault();
-    if (!touchClone) return;
+    if (!touchClone || !touchDraggedElement) return;
 
     const touch = e.touches[0];
-    touchClone.style.left = (touch.clientX - touchClone.offsetWidth / 2) + 'px';
-    touchClone.style.top = (touch.clientY - touchClone.offsetHeight / 2) + 'px';
+    updateClonePosition(touch.clientX, touch.clientY);
 
-    // Highlight drop zones under the touch
-    const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
-    const dropTarget = elementUnderTouch && elementUnderTouch.closest('.drop-target');
+    // Check if we've moved enough to consider this a drag
+    const deltaX = Math.abs(touch.clientX - initialTouchX);
+    const deltaY = Math.abs(touch.clientY - initialTouchY);
+    const minDragDistance = 10; // Minimum pixels to start dragging
 
+    if (deltaX > minDragDistance || deltaY > minDragDistance) {
+        isDragging = true;
+    }
+
+    // Highlight drop zones under the touch using bounding box check
+    highlightDropZoneAtPoint(touch.clientX, touch.clientY);
+}
+
+function highlightDropZoneAtPoint(x, y) {
     // Remove previous hover
     document.querySelectorAll('.drop-target.hover').forEach(el => el.classList.remove('hover'));
 
-    if (dropTarget && !dropTarget.classList.contains('filled')) {
-        dropTarget.classList.add('hover');
+    // Check all drop targets to see if the point is inside any of them
+    const dropTargets = document.querySelectorAll('.drop-target:not(.filled)');
+    for (const dropTarget of dropTargets) {
+        const rect = dropTarget.getBoundingClientRect();
+        if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+            dropTarget.classList.add('hover');
+            break; // Only highlight one at a time
+        }
     }
 }
 
 function handleTouchEnd(e) {
     e.preventDefault();
-    if (!touchDraggedElement || !touchClone) return;
+    e.stopPropagation();
+    if (!touchDraggedElement) return;
 
     const touch = e.changedTouches[0];
-    const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
-    const dropTarget = elementUnderTouch && elementUnderTouch.closest('.drop-target');
 
     // Remove hover
     document.querySelectorAll('.drop-target.hover').forEach(el => el.classList.remove('hover'));
 
-    if (dropTarget && !dropTarget.classList.contains('filled')) {
-        dropTarget.textContent = touchDraggedElement.textContent;
-        dropTarget.classList.add('filled');
-        touchDraggedElement.style.display = 'none';
-        touchDraggedElement.setAttribute('data-dropped', 'true');
-        touchDraggedElement.setAttribute('data-target-id', dropTarget.id);
+    // Only perform drop if we were actually dragging
+    if (isDragging) {
+        // Find drop target at the touch end position using bounding box check
+        const dropTargets = document.querySelectorAll('.drop-target:not(.filled)');
+        let targetDropZone = null;
+
+        for (const dropTarget of dropTargets) {
+            const rect = dropTarget.getBoundingClientRect();
+            if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                targetDropZone = dropTarget;
+                break;
+            }
+        }
+
+        if (targetDropZone) {
+            targetDropZone.textContent = touchDraggedElement.textContent;
+            targetDropZone.classList.add('filled');
+            touchDraggedElement.style.display = 'none';
+            touchDraggedElement.setAttribute('data-dropped', 'true');
+            touchDraggedElement.setAttribute('data-target-id', targetDropZone.id);
+        }
     }
 
     // Clean up
-    if (touchClone.parentNode) {
+    if (touchClone && touchClone.parentNode) {
         touchClone.parentNode.removeChild(touchClone);
     }
     touchClone = null;
-    touchDraggedElement.classList.remove('dragging');
+    if (touchDraggedElement) {
+        touchDraggedElement.classList.remove('dragging');
+    }
     touchDraggedElement = null;
+    isDragging = false;
 }
 
 // الدالة الجديدة لإعادة الكلمة المسحوبة
