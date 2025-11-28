@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مغامرات كمبيوتري</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- أزرار التحكم العلوية (اللغة والوضع الداكن) -->
+    <div id="controls-top">
+        <div id="lang-switcher" class="control-btn">
+            <button id="lang-ar" class="lang-btn active">عربي</button>
+            <button id="lang-en" class="lang-btn">English</button>
+        </div>
+        <div id="dark-mode-toggle" class="control-btn">
+            <!-- أيقونة الوضع الداكن - استخدام SVG مضمنة لضمان الظهور -->
+            <svg class="dark-mode-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </div>
+    </div>
+
+    <!-- شاشة البداية -->
+    <div id="start-screen" class="screen active">
+        <h1 data-key="welcome_title">مغامرات كمبيوتري</h1>
+        <img src="https://png.pngtree.com/png-clipart/20250105/original/pngtree-friendly-robot-working-on-laptop-cartoon-vector-design-png-image_20059319.png" alt="روبوت لطيف" class="robot-main">
+        <p data-key="welcome_message">أهلاً بك يا بطلة! هل أنتِ مستعدة لمغامرة ممتعة في عالم الكمبيوتر؟</p>
+        <button id="start-button" class="btn" data-key="start_button">ابدئي المغامرة!</button>
+        <button id="speak-start" class="speak-btn">
+            <svg class="speak-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+        </button>
+    </div>
+
+    <!-- شاشة اللعبة الرئيسية -->
+    <div id="game-screen" class="screen">
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+        <div class="game-header">
+            <img src="https://png.pngtree.com/png-clipart/20250105/original/pngtree-friendly-robot-working-on-laptop-cartoon-vector-design-png-image_20059319.png" alt="روبوت مرشد" class="robot-guide">
+            <div class="question-title-container">
+                <h2 id="question-title"></h2>
+                <button id="speak-game" class="speak-btn">
+                    <svg class="speak-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                </button>
+            </div>
+        </div>
+        <div id="question-container">
+            <!-- سيتم حقن محتوى الألعاب المختلفة هنا بواسطة جافاسكريبت -->
+        </div>
+        <div id="feedback" class="feedback"></div>
+        <button id="next-button" class="btn" data-key="next_button" style="display:none;">السؤال التالي</button>
+    </div>
+
+    <!-- شاشة النهاية -->
+    <div id="end-screen" class="screen">
+        <h1 data-key="end_title">مبروووك يا بطلة!</h1>
+        <img src="https://i.imgur.com/tZ2x2aG.png" alt="روبوت يحتفل" class="robot-celebrate">
+        <p data-key="end_message">لقد أكملتِ المغامرة بنجاح وأصبحتِ خبيرة في عالم الكمبيوتر!</p>
+        <button id="restart-button" class="btn" data-key="restart_button">العب مرة أخرى</button>
+        <button id="speak-end" class="speak-btn">
+            <svg class="speak-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+        </button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

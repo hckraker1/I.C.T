@@ -1,0 +1,502 @@
+/* --- الإعدادات العامة --- */
+:root {
+    --bg-light: linear-gradient(135deg, #a8e0ff, #c2f0ff);
+    --bg-dark: linear-gradient(135deg, #121212, #333333);
+    --card-bg-light: rgba(255, 255, 255, 0.9);
+    --card-bg-dark: rgba(40, 40, 40, 0.95);
+    --text-color-light: #333;
+    --text-color-dark: #ffffff;
+    --primary-color-light: #0077b6;
+    --primary-color-dark: #4fc3f7;
+    --secondary-color: #ff8c00;
+    --border-color-light: #add8e6;
+    --border-color-dark: #555;
+    --option-bg-light: #f0f8ff;
+    --option-bg-dark: #3a3a3a;
+}
+
+body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    color: var(--text-color-light);
+    transition: background 0.5s, color 0.5s;
+}
+
+/* --- الوضع الداكن (Dark Mode) --- */
+body.dark-mode {
+    background: var(--bg-dark);
+    color: var(--text-color-dark);
+}
+
+body.dark-mode .screen {
+    background-color: var(--card-bg-dark);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode h1, body.dark-mode h2 {
+    color: var(--primary-color-dark);
+}
+
+body.dark-mode .option-btn {
+    background-color: var(--option-bg-dark);
+    border-color: var(--border-color-dark);
+    color: var(--text-color-dark);
+}
+
+body.dark-mode .option-btn:hover {
+    background-color: #4a4a4a;
+}
+
+/* --- الشاشات العامة --- */
+.screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background-color: var(--card-bg-light);
+    padding: 40px 20px;
+    border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 650px;
+    margin: 20px 0;
+    transition: background-color 0.5s, box-shadow 0.5s;
+}
+
+.screen.active {
+    display: flex;
+}
+
+/* --- أزرار اللغة والوضع الداكن --- */
+#controls-top {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 25px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode #controls-top {
+    background: rgba(50, 50, 50, 0.9);
+}
+
+#lang-switcher {
+    display: flex;
+    gap: 5px;
+}
+
+#dark-mode-toggle {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-left: 10px;
+}
+
+body.dark-mode #dark-mode-toggle {
+    background: rgba(70, 70, 70, 0.8);
+}
+
+#dark-mode-toggle:hover {
+    transform: scale(1.1);
+}
+
+.lang-btn {
+    background-color: var(--option-bg-light);
+    border: 2px solid var(--border-color-light);
+    color: var(--text-color-light);
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 0 2px;
+}
+
+body.dark-mode .lang-btn {
+    background-color: var(--option-bg-dark);
+    border-color: var(--border-color-dark);
+    color: var(--text-color-dark);
+}
+
+.lang-btn:hover {
+    background-color: var(--secondary-color);
+    color: white;
+    transform: scale(1.05);
+}
+
+.lang-btn.active {
+    background-color: var(--secondary-color);
+    color: white;
+    border-color: var(--secondary-color);
+}
+
+.dark-mode-icon {
+    width: 25px;
+    height: 25px;
+    filter: invert(0.1);
+}
+
+body.dark-mode .dark-mode-icon {
+    filter: invert(0.9);
+}
+
+/* --- تصميم العناصر المشتركة --- */
+h1 { color: var(--primary-color-light); font-size: 2.5rem; transition: color 0.5s; }
+h2 { color: var(--primary-color-light); font-size: 1.6rem; transition: color 0.5s; }
+p { font-size: 1.2rem; }
+
+.btn {
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+    margin-top: 20px;
+}
+
+.btn:hover { transform: scale(1.05); background-color: #ffA500; }
+
+/* --- تصميم الروبوتات والحركات --- */
+.robot-main { width: 150px; margin: 20px 0; }
+.robot-celebrate { width: 180px; margin: 20px 0; animation: dance 2s infinite; }
+.robot-guide { 
+    width: 100px;
+    margin-bottom: 10px;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+@keyframes dance {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+}
+
+/* --- شاشة اللعبة --- */
+.game-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.question-title-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.speak-icon {
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.speak-icon:hover {
+    transform: scale(1.2);
+}
+
+.speak-btn {
+    background-color: var(--secondary-color);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+    margin-top: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.speak-btn:hover {
+    transform: scale(1.1);
+    background-color: #ffA500;
+}
+
+.speak-btn .speak-icon {
+    width: 25px;
+    height: 25px;
+    color: white;
+}
+
+#question-container {
+    width: 100%;
+    min-height: 200px; /* لتجنب اهتزاز الشاشة */
+}
+
+/* --- أنماط الألعاب الجديدة --- */
+
+/* نمط الاختيار من متعدد (Multiple Choice) */
+.mc-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.option-btn {
+    background-color: var(--option-bg-light);
+    border: 2px solid var(--border-color-light);
+    padding: 15px;
+    border-radius: 15px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.option-btn:hover {
+    background-color: #e0f7ff;
+    transform: translateY(-2px);
+}
+
+.option-btn.correct { background-color: #90ee90; border-color: #3cb371; animation: correct-answer 0.5s; }
+.option-btn.wrong { background-color: #ffcccb; border-color: #dc143c; animation: wrong-answer 0.5s; }
+
+/* نمط السحب والإفلات (Drag and Drop) */
+.drag-drop-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.drag-items {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.05);
+    width: 100%;
+}
+
+body.dark-mode .drag-items {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.drag-item {
+    padding: 10px 15px;
+    background-color: var(--secondary-color);
+    color: white;
+    border-radius: 8px;
+    cursor: grab;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.1s;
+}
+
+body.dark-mode .drag-item {
+    background-color: #1976d2 !important;
+    color: white !important;
+}
+
+.drag-item:active {
+    cursor: grabbing;
+    transform: scale(1.05);
+}
+
+.drop-zones {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.drop-zone-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: var(--option-bg-light);
+    border: 2px solid var(--border-color-light);
+}
+
+body.dark-mode .drop-zone-item {
+    background-color: var(--option-bg-dark);
+    border-color: var(--border-color-dark);
+}
+
+.drop-target {
+    width: 150px;
+    height: 40px;
+    border: 2px dashed #ccc;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: #888;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.drop-target.hover {
+    background-color: #e0f7ff;
+    border-color: var(--primary-color-light);
+}
+
+.drop-target.filled {
+    border: 2px solid transparent;
+    background-color: transparent;
+    color: var(--text-color-light);
+}
+
+body.dark-mode .drop-target.filled {
+    color: var(--text-color-dark);
+    background-color: #1976d2 !important;
+}
+
+.drop-target.correct { border-color: #3cb371; background-color: #d4edda; }
+.drop-target.wrong { border-color: #dc143c; background-color: #f8d7da; }
+
+/* نمط التوصيل بالصورة (Image Matching) */
+.image-match-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+.match-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+body.dark-mode .match-row {
+    border-bottom: 1px solid #444;
+}
+
+.match-image-container {
+    width: 100px;
+    height: 100px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.match-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.match-options {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 60%;
+}
+
+.match-option-btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color-light);
+    background-color: var(--option-bg-light);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.9rem;
+}
+
+body.dark-mode .match-option-btn {
+    border: 1px solid var(--border-color-dark);
+    background-color: var(--option-bg-dark);
+    color: var(--text-color-dark) !important;
+}
+
+.match-option-btn.selected {
+    background-color: var(--secondary-color);
+    color: white;
+    border-color: var(--secondary-color);
+}
+
+body.dark-mode .match-option-btn.selected {
+    background-color: var(--primary-color-dark);
+    color: white;
+    border-color: var(--primary-color-dark);
+}
+
+/* --- التجاوب (Responsive Design) --- */
+@media (max-width: 768px) {
+    .screen {
+        padding: 20px 10px;
+    }
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.4rem; }
+    p { font-size: 1rem; }
+    .btn { padding: 12px 25px; font-size: 1rem; }
+    .robot-main { width: 120px; }
+    .robot-guide { width: 80px; }
+    
+    /* تعديل نمط السحب والإفلات للأجهزة الصغيرة */
+    .drop-zone-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .drop-target {
+        width: 100%;
+        height: 50px;
+    }
+    .drag-items {
+        gap: 10px;
+    }
+    .drag-item {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    /* تعديل نمط التوصيل بالصورة للأجهزة الصغيرة */
+    .match-row {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    .match-image-container {
+        width: 80px;
+        height: 80px;
+    }
+    .match-options {
+        width: 100%;
+    }
+}
+
+/* --- شريط التقدم --- */
+#progress-bar-container { width: 100%; height: 20px; background-color: #e0e0e0; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+#progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); border-radius: 10px; transition: width 0.5s ease-in-out; }
