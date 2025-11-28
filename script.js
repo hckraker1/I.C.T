@@ -195,9 +195,9 @@ function speak(text, lang) {
     // Adjust voice parameters based on language and device
     const isMobile = isMobileDevice();
     if (lang.startsWith('ar')) {
-        // Arabic: normal reading like English
-        utterance.rate = 0.8; // أبطأ ليبدو طبيعياً
-        utterance.pitch = 1.1; // ارتفاع صوت طبيعي
+        // Arabic: enthusiastic and childish style, male voice
+        utterance.rate = 1.0; // سرعة طبيعية مع لمسة حماس
+        utterance.pitch = isMobile ? 0.5 : 0.1; // على الهاتف، رفع الصوت قليلاً ليبدو أفضل
         utterance.volume = 1.0; // حجم عالي
     } else {
         // English: default teacher-like
