@@ -19,7 +19,7 @@ let currentLang = 'ar';
 const translations = {
     ar: {
         welcome_title: "مغامرات الحاسوب",
-        welcome_message: "أهلاً بك أيها البطل الصغير! هل أنت مستعد لمغامرة ممتعة في عالم الحاسوب؟",
+        welcome_message: "أهلاً بكي ياتوتا ! هل انتي مستعده لمغامرة ممتعة في عالم الحاسوب؟",
         start_button: "ابدأ المغامرة!",
         end_title: "تهانينا أيها البطل!",
         end_message: "لقد أكملت المغامرة بنجاح وأصبحت خبيراً في عالم الحاسوب!",
@@ -32,7 +32,7 @@ const translations = {
     },
     en: {
         welcome_title: "Computer Adventures",
-        welcome_message: "Welcome, little hero! Are you ready for a fun adventure in the computer world?",
+        welcome_message: "Welcome, tota! Are you ready for a fun adventure in the computer world?",
         start_button: "Start Adventure!",
         end_title: "Congratulations, Hero!",
         end_message: "You have successfully completed the adventure and become a computer expert!",
@@ -185,26 +185,69 @@ function speak(text, lang) {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
-    utterance.rate = 0.8; // أبطأ ليبدو كمعلم
-    utterance.pitch = 1.1; // ارتفاع صوت قليلاً
-    utterance.volume = 1;
 
-    // For Arabic, try to find a suitable voice, but fall back to default if none found
+    // Adjust voice parameters based on language
     if (lang.startsWith('ar')) {
-        const voices = window.speechSynthesis.getVoices();
-        let arabicVoice = voices.find(voice => voice.lang.startsWith('ar') || voice.lang === 'ar-SA' || voice.lang === 'ar-EG' || voice.name.toLowerCase().includes('arabic'));
-
-        if (arabicVoice) {
-            utterance.voice = arabicVoice;
-            console.log('Using Arabic voice:', arabicVoice.name);
-        } else {
-            console.warn('No Arabic voice found. Using default voice. Please install Arabic language pack in Windows settings for better Arabic speech.');
-            alert('لم يتم العثور على صوت عربي. يرجى تثبيت حزمة اللغة العربية في إعدادات Windows للحصول على نطق عربي أفضل.');
-        }
+        // Arabic: enthusiastic and childish style, male voice
+        utterance.rate = 1.0; // سرعة طبيعية مع لمسة حماس
+        utterance.pitch = 0.1; // صوت أقل ارتفاعاً ليبدو ذكرياً أكثر
+        utterance.volume = 1.0; // حجم عالي
+    } else {
+        // English: default teacher-like
+        utterance.rate = 0.8; // أبطأ ليبدو كمعلم
+        utterance.pitch = 1.1; // ارتفاع صوت قليلاً
+        utterance.volume = 1;
     }
 
-    // Speak the utterance
-    window.speechSynthesis.speak(utterance);
+    // Function to get voices and set up speech
+    function setupVoice() {
+        const voices = window.speechSynthesis.getVoices();
+        console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+
+        if (lang.startsWith('ar')) {
+            // Prefer male Arabic voice
+            let arabicVoice = voices.find(voice =>
+                (voice.lang.startsWith('ar') ||
+                voice.lang === 'ar-SA' ||
+                voice.lang === 'ar-EG' ||
+                voice.name.toLowerCase().includes('arabic') ||
+                voice.name.toLowerCase().includes('عربي')) &&
+                (voice.name.toLowerCase().includes('male') ||
+                voice.name.toLowerCase().includes('man') ||
+                voice.name.toLowerCase().includes('ذكر'))
+            );
+
+            // If no male voice found, use any Arabic voice
+            if (!arabicVoice) {
+                arabicVoice = voices.find(voice =>
+                    voice.lang.startsWith('ar') ||
+                    voice.lang === 'ar-SA' ||
+                    voice.lang === 'ar-EG' ||
+                    voice.name.toLowerCase().includes('arabic') ||
+                    voice.name.toLowerCase().includes('عربي')
+                );
+            }
+
+            if (arabicVoice) {
+                utterance.voice = arabicVoice;
+                console.log('Using Arabic voice:', arabicVoice.name, arabicVoice.lang);
+            } else {
+                console.warn('No Arabic voice found. Available voices:', voices.map(v => v.name).join(', '));
+                alert('لم يتم العثور على صوت عربي في هذا المتصفح.\n\nللحصول على صوت عربي:\n1. اذهب إلى إعدادات Windows\n2. اختر "الوقت واللغة" > "اللغة"\n3. أضف اللغة العربية\n4. قم بتثبيت حزمة اللغة العربية\n5. أعد تشغيل المتصفح\n\nأو جرب استخدام متصفح Chrome أو Edge.');
+            }
+        }
+
+        // Speak the utterance
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // Get voices immediately or wait for them to load
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+        setupVoice();
+    } else {
+        window.speechSynthesis.addEventListener('voiceschanged', setupVoice, { once: true });
+    }
 }
 
 // --- دوال الوضع الداكن ---
