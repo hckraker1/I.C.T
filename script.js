@@ -377,10 +377,8 @@ function renderDragAndDrop(data) {
         item.classList.add('drag-item');
 
         if (isMobile) {
-            // For mobile: touch drag
-            item.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
-            item.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
-            item.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+            // For mobile: tap to select
+            item.addEventListener('click', handleItemSelect);
         } else {
             // For desktop: drag
             item.setAttribute('draggable', true);
