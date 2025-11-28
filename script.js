@@ -156,6 +156,12 @@ let draggedElement = null;
 let dragItemsContainerRef = null; 
 
 // --- دوال اللغة والقراءة ---
+// دالة للكشف عن الأجهزة المحمولة
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           (window.innerWidth <= 768 && window.innerHeight <= 1024);
+}
+
 function setLanguage(lang) {
     currentLang = lang;
     document.documentElement.lang = lang;
@@ -168,7 +174,7 @@ function setLanguage(lang) {
 
     langArButton.classList.toggle('active', lang === 'ar');
     langEnButton.classList.toggle('active', lang === 'en');
-    
+
     if (gameScreen.classList.contains('active')) {
         showQuestion();
     }
@@ -186,11 +192,12 @@ function speak(text, lang) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
 
-    // Adjust voice parameters based on language
+    // Adjust voice parameters based on language and device
+    const isMobile = isMobileDevice();
     if (lang.startsWith('ar')) {
         // Arabic: enthusiastic and childish style, male voice
         utterance.rate = 1.0; // سرعة طبيعية مع لمسة حماس
-        utterance.pitch = 0.1; // صوت أقل ارتفاعاً ليبدو ذكرياً أكثر
+        utterance.pitch = isMobile ? 0.5 : 0.1; // على الهاتف، رفع الصوت قليلاً ليبدو أفضل
         utterance.volume = 1.0; // حجم عالي
     } else {
         // English: default teacher-like
@@ -765,10 +772,3 @@ document.getElementById('speak-game').addEventListener('click', () => {
 document.getElementById('speak-end').addEventListener('click', () => {
     const title = document.querySelector('#end-screen h1').textContent;
     const message = document.querySelector('#end-screen p').textContent;
-    const textToSpeak = title + '. ' + message;
-    speak(textToSpeak, currentLang === 'ar' ? 'ar-SA' : 'en-US');
-});
-
-// تهيئة اللغة والوضع الداكن عند تحميل الصفحة
-loadDarkModeSetting();
-setLanguage('ar');
