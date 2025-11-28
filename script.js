@@ -156,62 +156,63 @@ let draggedElement = null;
 let dragItemsContainerRef = null; 
 
 // --- دوال اللغة والقراءة ---
-// دالة للكشف عن الأجهزة المحمولة (محسنة)
+// دالة للكشف عن الأجهزة المحمولة
 function isMobileDevice() {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-           (window.innerWidth <= 768) ||
-           ('ontouchstart' in window) ||
-           (navigator.maxTouchPoints > 0) ||
-           (navigator.msMaxTouchPoints > 0);
+           (window.innerWidth <= 768 && window.innerHeight <= 1024);
 }
 
-// دالة النطق المحسنة للهواتف
-function speak(text, lang) {
-    // إيقاف أي صوت قيد التشغيل
-    window.speechSynthesis.cancel();
-    
-    // إذا كان جهاز محمول، استخدم صوت إنجليزي بدلاً من إظهار خطأ
-    if (isMobileDevice() && lang.startsWith('ar')) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US'; // استخدام الإنجليزية كبديل
-        
-        // إعدادات مناسبة للهواتف
-        utterance.rate = 0.8;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-        
-        window.speechSynthesis.speak(utterance);
-        return;
-    }
+function setLanguage(lang) {
+    currentLang = lang;
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
 
-    // الكود الأصلي لأجهزة الكمبيوتر
+    document.querySelectorAll('[data-key]').forEach(element => {
+        const key = element.getAttribute('data-key');
+        element.textContent = translations[lang][key];
+    });
+
+    langArButton.classList.toggle('active', lang === 'ar');
+    langEnButton.classList.toggle('active', lang === 'en');
+
+    if (gameScreen.classList.contains('active')) {
+        showQuestion();
+    }
+}
+
+function speak(text, lang) {
+    // Check if speech synthesis is supported
     if (!('speechSynthesis' in window)) {
         console.warn('Speech synthesis not supported on this device/browser.');
+        alert('القراءة الصوتية غير مدعومة في هذا المتصفح.');
         return;
     }
 
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
 
-    // ضبط معلمات الصوت بناءً على اللغة والجهاز
+    // Adjust voice parameters based on language and device
     const isMobile = isMobileDevice();
     if (lang.startsWith('ar')) {
-        utterance.rate = 0.8;
-        utterance.pitch = 1.1;
-        utterance.volume = 1.0;
+        // Arabic: normal reading like English
+        utterance.rate = 0.8; // أبطأ ليبدو طبيعياً
+        utterance.pitch = 1.1; // ارتفاع صوت طبيعي
+        utterance.volume = 1.0; // حجم عالي
     } else {
-        utterance.rate = 0.8;
-        utterance.pitch = 1.1;
+        // English: default teacher-like
+        utterance.rate = 0.8; // أبطأ ليبدو كمعلم
+        utterance.pitch = 1.1; // ارتفاع صوت قليلاً
         utterance.volume = 1;
     }
 
-    // دالة للحصول على الأصوات وإعداد الكلام
+    // Function to get voices and set up speech
     function setupVoice() {
         const voices = window.speechSynthesis.getVoices();
         console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
 
         if (lang.startsWith('ar')) {
-            // تفضيل صوت عربي ذكر
+            // Prefer male Arabic voice
             let arabicVoice = voices.find(voice =>
                 (voice.lang.startsWith('ar') ||
                 voice.lang === 'ar-SA' ||
@@ -223,7 +224,7 @@ function speak(text, lang) {
                 voice.name.toLowerCase().includes('ذكر'))
             );
 
-            // إذا لم يتم العثور على صوت ذكر، استخدم أي صوت عربي
+            // If no male voice found, use any Arabic voice
             if (!arabicVoice) {
                 arabicVoice = voices.find(voice =>
                     voice.lang.startsWith('ar') ||
@@ -238,36 +239,21 @@ function speak(text, lang) {
                 utterance.voice = arabicVoice;
                 console.log('Using Arabic voice:', arabicVoice.name, arabicVoice.lang);
             } else {
-                console.warn('No Arabic voice found. Using default voice.');
+                console.warn('No Arabic voice found. Available voices:', voices.map(v => v.name).join(', '));
+                alert('لم يتم العثور على صوت عربي في هذا المتصفح.\n\nللحصول على صوت عربي:\n1. اذهب إلى إعدادات Windows\n2. اختر "الوقت واللغة" > "اللغة"\n3. أضف اللغة العربية\n4. قم بتثبيت حزمة اللغة العربية\n5. أعد تشغيل المتصفح\n\nأو جرب استخدام متصفح Chrome أو Edge.');
             }
         }
 
-        // نطق الكلام
+        // Speak the utterance
         window.speechSynthesis.speak(utterance);
     }
 
-    // الحصول على الأصوات فوراً أو الانتظار حتى يتم تحميلها
+    // Get voices immediately or wait for them to load
     const voices = window.speechSynthesis.getVoices();
     if (voices.length > 0) {
         setupVoice();
     } else {
         window.speechSynthesis.addEventListener('voiceschanged', setupVoice, { once: true });
-    }
-}
-
-// دالة النطق مع بديل للهواتف
-function speakWithFallback(text, lang) {
-    try {
-        speak(text, lang);
-    } catch (error) {
-        console.log('استخدام الصوت البديل للهاتف');
-        
-        // بديل بسيط بدون أصوات
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        utterance.rate = 0.8;
-        
-        window.speechSynthesis.speak(utterance);
     }
 }
 
@@ -308,7 +294,7 @@ function showQuestion() {
     const ordinal = currentLang === 'ar' ? arabicOrdinals[currentQuestionIndex] : englishOrdinals[currentQuestionIndex];
     const questionLabel = currentLang === 'ar' ? 'السؤال' : 'Question';
     questionTitle.textContent = `${questionLabel} ${ordinal} ${currentQuestionData.q}`;
-    speakWithFallback(currentQuestionData.q, currentLang === 'ar' ? 'ar-SA' : 'en-US');
+    speak(currentQuestionData.q, currentLang === 'ar' ? 'ar-SA' : 'en-US');
 
     if (currentQuestion.type === 'multiple_choice') {
         renderMultipleChoice(currentQuestionData);
@@ -387,14 +373,14 @@ function renderDragAndDrop(data) {
         item.textContent = itemText;
         item.classList.add('drag-item');
         item.setAttribute('draggable', true);
-        // جعل العنصر مناسباً للمس
+        // Make the item more touch-friendly
         item.style.touchAction = 'none';
         item.style.userSelect = 'none';
         item.style.webkitTouchCallout = 'none';
         item.style.webkitUserSelect = 'none';
         item.style.webkitTapHighlightColor = 'transparent';
         item.addEventListener('dragstart', handleDragStart);
-        // إضافة مستمعي أحداث اللمس لدعم الأجهزة المحمولة
+        // Add touch event listeners for mobile support with more aggressive prevention
         item.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
         item.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
         item.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
@@ -467,7 +453,7 @@ function handleDrop(e) {
     }
 }
 
-// معالجات أحداث اللمس لدعم السحب والإفلات على الأجهزة المحمولة
+// Touch event handlers for mobile drag-and-drop support
 let touchDraggedElement = null;
 let touchClone = null;
 let initialTouchX = 0;
@@ -479,7 +465,7 @@ function handleTouchStart(e) {
     e.stopPropagation();
     const touch = e.touches[0];
 
-    // البحث عن عنصر السحب
+    // Find the drag item by checking if the touch target or its parents is a drag item
     let target = e.target;
     while (target && target !== e.currentTarget) {
         if (target.classList.contains('drag-item')) {
@@ -493,12 +479,12 @@ function handleTouchStart(e) {
 
     touchDraggedElement.classList.add('dragging');
 
-    // تخزين موضع اللمس الأولي
+    // Store initial touch position
     initialTouchX = touch.clientX;
     initialTouchY = touch.clientY;
     isDragging = false;
 
-    // إنشاء نسخة بصرية للسحب
+    // Create a visual clone for dragging
     touchClone = touchDraggedElement.cloneNode(true);
     touchClone.classList.add('touch-clone');
     touchClone.style.position = 'fixed';
@@ -506,18 +492,18 @@ function handleTouchStart(e) {
     touchClone.style.zIndex = '1000';
     touchClone.style.transform = 'scale(1.05)';
     touchClone.style.opacity = '0.95';
-    touchClone.style.transition = 'none'; // تعطيل التحولات للمتابعة السلسة
+    touchClone.style.transition = 'none'; // Disable transitions for smooth following
 
     document.body.appendChild(touchClone);
 
-    // وضع النسخة في البداية عند نقطة اللمس
+    // Position the clone initially at the touch point
     updateClonePosition(touch.clientX, touch.clientY);
 }
 
 function updateClonePosition(clientX, clientY) {
     if (!touchClone) return;
 
-    // وضع النسخة في المركز على نقطة اللمس
+    // Position the clone centered on the touch point
     const cloneRect = touchClone.getBoundingClientRect();
     const cloneWidth = cloneRect.width;
     const cloneHeight = cloneRect.height;
@@ -533,30 +519,30 @@ function handleTouchMove(e) {
     const touch = e.touches[0];
     updateClonePosition(touch.clientX, touch.clientY);
 
-    // التحقق مما إذا كنا قد تحركنا بما يكفي لاعتبار هذا سحباً
+    // Check if we've moved enough to consider this a drag
     const deltaX = Math.abs(touch.clientX - initialTouchX);
     const deltaY = Math.abs(touch.clientY - initialTouchY);
-    const minDragDistance = 10; // الحد الأدنى للبكسل لبدء السحب
+    const minDragDistance = 10; // Minimum pixels to start dragging
 
     if (deltaX > minDragDistance || deltaY > minDragDistance) {
         isDragging = true;
     }
 
-    // تمييز مناطق الإفلات تحت اللمس باستخدام فحص المربع المحيط
+    // Highlight drop zones under the touch using bounding box check
     highlightDropZoneAtPoint(touch.clientX, touch.clientY);
 }
 
 function highlightDropZoneAtPoint(x, y) {
-    // إزالة التمييز السابق
+    // Remove previous hover
     document.querySelectorAll('.drop-target.hover').forEach(el => el.classList.remove('hover'));
 
-    // فحص جميع أهداف الإفلات لمعرفة ما إذا كانت النقطة داخل أي منها
+    // Check all drop targets to see if the point is inside any of them
     const dropTargets = document.querySelectorAll('.drop-target:not(.filled)');
     for (const dropTarget of dropTargets) {
         const rect = dropTarget.getBoundingClientRect();
         if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
             dropTarget.classList.add('hover');
-            break; // تمييز واحد فقط في كل مرة
+            break; // Only highlight one at a time
         }
     }
 }
@@ -568,12 +554,12 @@ function handleTouchEnd(e) {
 
     const touch = e.changedTouches[0];
 
-    // إزالة التمييز
+    // Remove hover
     document.querySelectorAll('.drop-target.hover').forEach(el => el.classList.remove('hover'));
 
-    // تنفيذ الإفلات فقط إذا كنا نسحب بالفعل
+    // Only perform drop if we were actually dragging
     if (isDragging) {
-        // البحث عن هدف الإفلات عند موضع نهاية اللمس باستخدام فحص المربع المحيط
+        // Find drop target at the touch end position using bounding box check
         const dropTargets = document.querySelectorAll('.drop-target:not(.filled)');
         let targetDropZone = null;
 
@@ -595,7 +581,7 @@ function handleTouchEnd(e) {
         }
     }
 
-    // التنظيف
+    // Clean up
     if (touchClone && touchClone.parentNode) {
         touchClone.parentNode.removeChild(touchClone);
     }
@@ -774,41 +760,22 @@ document.getElementById('speak-start').addEventListener('click', () => {
     const title = document.querySelector('#start-screen h1').textContent;
     const message = document.querySelector('#start-screen p').textContent;
     const textToSpeak = title + '. ' + message;
-    speakWithFallback(textToSpeak, currentLang === 'ar' ? 'ar-SA' : 'en-US');
+    speak(textToSpeak, currentLang === 'ar' ? 'ar-SA' : 'en-US');
 });
 
 document.getElementById('speak-game').addEventListener('click', () => {
     const questionText = questions[currentQuestionIndex][currentLang].q;
     const lang = currentLang === 'ar' ? 'ar-SA' : 'en-US';
-    speakWithFallback(questionText, lang);
+    speak(questionText, lang);
 });
 
 document.getElementById('speak-end').addEventListener('click', () => {
     const title = document.querySelector('#end-screen h1').textContent;
     const message = document.querySelector('#end-screen p').textContent;
     const textToSpeak = title + '. ' + message;
-    speakWithFallback(textToSpeak, currentLang === 'ar' ? 'ar-SA' : 'en-US');
+    speak(textToSpeak, currentLang === 'ar' ? 'ar-SA' : 'en-US');
 });
 
 // تهيئة اللغة والوضع الداكن عند تحميل الصفحة
 loadDarkModeSetting();
 setLanguage('ar');
-
-// دالة setLanguage المطلوبة
-function setLanguage(lang) {
-    currentLang = lang;
-    document.documentElement.lang = lang;
-    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-
-    document.querySelectorAll('[data-key]').forEach(element => {
-        const key = element.getAttribute('data-key');
-        element.textContent = translations[lang][key];
-    });
-
-    langArButton.classList.toggle('active', lang === 'ar');
-    langEnButton.classList.toggle('active', lang === 'en');
-
-    if (gameScreen.classList.contains('active')) {
-        showQuestion();
-    }
-}
