@@ -383,6 +383,24 @@ body.dark-mode .drop-target.filled {
 .drop-target.correct { border-color: #3cb371; background-color: #d4edda; }
 .drop-target.wrong { border-color: #dc143c; background-color: #f8d7da; }
 
+/* Touch clone for mobile drag-and-drop */
+.touch-clone {
+    background-color: var(--secondary-color);
+    color: white;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    opacity: 0.9;
+    transform: rotate(5deg);
+    pointer-events: none;
+    z-index: 1000;
+}
+
+body.dark-mode .touch-clone {
+    background-color: #1976d2;
+}
+
 /* نمط التوصيل بالصورة (Image Matching) */
 .image-match-container {
     display: flex;
