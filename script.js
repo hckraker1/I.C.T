@@ -178,6 +178,7 @@ function speak(text, lang) {
     // Check if speech synthesis is supported
     if (!('speechSynthesis' in window)) {
         console.warn('Speech synthesis not supported on this device/browser.');
+        alert('القراءة الصوتية غير مدعومة في هذا المتصفح.');
         return;
     }
 
@@ -188,71 +189,22 @@ function speak(text, lang) {
     utterance.pitch = 1.1; // ارتفاع صوت قليلاً
     utterance.volume = 1;
 
-    // Set a timeout for voice loading on mobile
-    let voiceTimeout = setTimeout(() => {
-        console.warn('Voice loading timeout. Speech synthesis may not work properly on this device.');
-        // Try to speak anyway with default settings
-        window.speechSynthesis.speak(utterance);
-    }, 3000);
-
-    function setVoice() {
-        clearTimeout(voiceTimeout);
+    // For Arabic, try to find a suitable voice, but fall back to default if none found
+    if (lang.startsWith('ar')) {
         const voices = window.speechSynthesis.getVoices();
-        let selectedVoice = null;
+        let arabicVoice = voices.find(voice => voice.lang.startsWith('ar') || voice.lang === 'ar-SA' || voice.lang === 'ar-EG' || voice.name.toLowerCase().includes('arabic'));
 
-        // First, try to find a voice that exactly matches the language
-        selectedVoice = voices.find(voice => voice.lang === lang);
-
-        // If not found, try to find a voice that includes the language prefix
-        if (!selectedVoice) {
-            selectedVoice = voices.find(voice => voice.lang.startsWith(lang.split('-')[0]));
-        }
-
-        // If still not found, try any voice that includes the language code
-        if (!selectedVoice) {
-            selectedVoice = voices.find(voice => voice.lang.includes(lang.split('-')[0]));
-        }
-
-        // As a last resort, use the default voice, but only if no better option
-        if (!selectedVoice && voices.length > 0) {
-            selectedVoice = voices[0]; // Use the first available voice
-        }
-
-        if (selectedVoice) {
-            // Check if the selected voice exactly matches the required language
-            if (selectedVoice.lang === lang) {
-                utterance.voice = selectedVoice;
-                window.speechSynthesis.speak(utterance);
-            } else {
-                // If the voice doesn't exactly match the language, try to speak anyway on mobile
-                // as mobile browsers may have limited voice options
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                if (isMobile) {
-                    utterance.voice = selectedVoice;
-                    window.speechSynthesis.speak(utterance);
-                } else {
-                    // On desktop, show alert for better voice
-                    if (lang.startsWith('ar')) {
-                        alert('لا يوجد صوت عربي متاح على جهازك. يرجى تثبيت صوت عربي أو استخدام متصفح آخر للحصول على نطق صحيح.');
-                    } else {
-                        alert('No suitable voice available for the selected language. Please install a voice pack or use a different browser.');
-                    }
-                }
-            }
+        if (arabicVoice) {
+            utterance.voice = arabicVoice;
+            console.log('Using Arabic voice:', arabicVoice.name);
         } else {
-            // No voice found at all - try to speak without specific voice
-            window.speechSynthesis.speak(utterance);
+            console.warn('No Arabic voice found. Using default voice. Please install Arabic language pack in Windows settings for better Arabic speech.');
+            alert('لم يتم العثور على صوت عربي. يرجى تثبيت حزمة اللغة العربية في إعدادات Windows للحصول على نطق عربي أفضل.');
         }
     }
 
-    // Try to get voices immediately
-    let voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) {
-        setVoice();
-    } else {
-        // Wait for voices to load
-        window.speechSynthesis.addEventListener('voiceschanged', setVoice, { once: true });
-    }
+    // Speak the utterance
+    window.speechSynthesis.speak(utterance);
 }
 
 // --- دوال الوضع الداكن ---
