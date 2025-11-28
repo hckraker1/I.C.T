@@ -175,6 +175,12 @@ function setLanguage(lang) {
 }
 
 function speak(text, lang) {
+    // Check if speech synthesis is supported
+    if (!('speechSynthesis' in window)) {
+        console.warn('Speech synthesis not supported on this device/browser.');
+        return;
+    }
+
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
@@ -182,7 +188,15 @@ function speak(text, lang) {
     utterance.pitch = 1.1; // ارتفاع صوت قليلاً
     utterance.volume = 1;
 
+    // Set a timeout for voice loading on mobile
+    let voiceTimeout = setTimeout(() => {
+        console.warn('Voice loading timeout. Speech synthesis may not work properly on this device.');
+        // Try to speak anyway with default settings
+        window.speechSynthesis.speak(utterance);
+    }, 3000);
+
     function setVoice() {
+        clearTimeout(voiceTimeout);
         const voices = window.speechSynthesis.getVoices();
         let selectedVoice = null;
 
@@ -210,22 +224,33 @@ function speak(text, lang) {
                 utterance.voice = selectedVoice;
                 window.speechSynthesis.speak(utterance);
             } else {
-                // If the voice doesn't exactly match the language, don't speak to avoid mispronunciation
-                if (lang.startsWith('ar')) {
-                    alert('لا يوجد صوت عربي متاح على جهازك. يرجى تثبيت صوت عربي أو استخدام متصفح آخر للحصول على نطق صحيح.');
+                // If the voice doesn't exactly match the language, try to speak anyway on mobile
+                // as mobile browsers may have limited voice options
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                if (isMobile) {
+                    utterance.voice = selectedVoice;
+                    window.speechSynthesis.speak(utterance);
                 } else {
-                    alert('No suitable voice available for the selected language. Please install a voice pack or use a different browser.');
+                    // On desktop, show alert for better voice
+                    if (lang.startsWith('ar')) {
+                        alert('لا يوجد صوت عربي متاح على جهازك. يرجى تثبيت صوت عربي أو استخدام متصفح آخر للحصول على نطق صحيح.');
+                    } else {
+                        alert('No suitable voice available for the selected language. Please install a voice pack or use a different browser.');
+                    }
                 }
             }
         } else {
-            // No voice found at all
-            alert('No voices available. Speech synthesis is not supported or no voices are installed.');
+            // No voice found at all - try to speak without specific voice
+            window.speechSynthesis.speak(utterance);
         }
     }
 
-    if (window.speechSynthesis.getVoices().length > 0) {
+    // Try to get voices immediately
+    let voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
         setVoice();
     } else {
+        // Wait for voices to load
         window.speechSynthesis.addEventListener('voiceschanged', setVoice, { once: true });
     }
 }
@@ -347,6 +372,10 @@ function renderDragAndDrop(data) {
         item.classList.add('drag-item');
         item.setAttribute('draggable', true);
         item.addEventListener('dragstart', handleDragStart);
+        // Add touch event listeners for mobile support
+        item.addEventListener('touchstart', handleTouchStart, { passive: false });
+        item.addEventListener('touchmove', handleTouchMove, { passive: false });
+        item.addEventListener('touchend', handleTouchEnd, { passive: false });
         dragItemsContainer.appendChild(item);
     });
     ddContainer.appendChild(dragItemsContainer);
@@ -405,7 +434,7 @@ function handleDragLeave(e) {
 function handleDrop(e) {
     e.preventDefault();
     e.target.classList.remove('hover');
-    
+
     if (e.target.classList.contains('drop-target') && !e.target.classList.contains('filled')) {
         const data = e.dataTransfer.getData('text/plain');
         e.target.textContent = data;
@@ -414,6 +443,77 @@ function handleDrop(e) {
         draggedElement.setAttribute('data-dropped', 'true');
         draggedElement.setAttribute('data-target-id', e.target.id); // حفظ مرجع منطقة الإفلات
     }
+}
+
+// Touch event handlers for mobile drag-and-drop support
+let touchDraggedElement = null;
+let touchClone = null;
+
+function handleTouchStart(e) {
+    e.preventDefault();
+    touchDraggedElement = e.target;
+    touchDraggedElement.classList.add('dragging');
+
+    // Create a visual clone for dragging
+    touchClone = touchDraggedElement.cloneNode(true);
+    touchClone.classList.add('touch-clone');
+    touchClone.style.position = 'absolute';
+    touchClone.style.pointerEvents = 'none';
+    touchClone.style.zIndex = '1000';
+    document.body.appendChild(touchClone);
+
+    // Position the clone at the touch point
+    const touch = e.touches[0];
+    touchClone.style.left = (touch.clientX - touchClone.offsetWidth / 2) + 'px';
+    touchClone.style.top = (touch.clientY - touchClone.offsetHeight / 2) + 'px';
+}
+
+function handleTouchMove(e) {
+    e.preventDefault();
+    if (!touchClone) return;
+
+    const touch = e.touches[0];
+    touchClone.style.left = (touch.clientX - touchClone.offsetWidth / 2) + 'px';
+    touchClone.style.top = (touch.clientY - touchClone.offsetHeight / 2) + 'px';
+
+    // Highlight drop zones under the touch
+    const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropTarget = elementUnderTouch && elementUnderTouch.closest('.drop-target');
+
+    // Remove previous hover
+    document.querySelectorAll('.drop-target.hover').forEach(el => el.classList.remove('hover'));
+
+    if (dropTarget && !dropTarget.classList.contains('filled')) {
+        dropTarget.classList.add('hover');
+    }
+}
+
+function handleTouchEnd(e) {
+    e.preventDefault();
+    if (!touchDraggedElement || !touchClone) return;
+
+    const touch = e.changedTouches[0];
+    const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropTarget = elementUnderTouch && elementUnderTouch.closest('.drop-target');
+
+    // Remove hover
+    document.querySelectorAll('.drop-target.hover').forEach(el => el.classList.remove('hover'));
+
+    if (dropTarget && !dropTarget.classList.contains('filled')) {
+        dropTarget.textContent = touchDraggedElement.textContent;
+        dropTarget.classList.add('filled');
+        touchDraggedElement.style.display = 'none';
+        touchDraggedElement.setAttribute('data-dropped', 'true');
+        touchDraggedElement.setAttribute('data-target-id', dropTarget.id);
+    }
+
+    // Clean up
+    if (touchClone.parentNode) {
+        touchClone.parentNode.removeChild(touchClone);
+    }
+    touchClone = null;
+    touchDraggedElement.classList.remove('dragging');
+    touchDraggedElement = null;
 }
 
 // الدالة الجديدة لإعادة الكلمة المسحوبة
